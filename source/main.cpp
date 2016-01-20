@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
 
 	cout << "Running on Linux" << endl;
 
-
+	cout << "Added on Linux" << endl;
 
 #endif
 
