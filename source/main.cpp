@@ -1,6 +1,7 @@
 #if defined(__APPLE__)
 
 #include "SDL2/SDL.h"
+#include "SDL2_image/SDL_image.h"
 
 #endif
 
@@ -21,12 +22,31 @@
 
 using namespace std;
 
+//code for frame rate independence
+float deltaTime = 0.0;
+int thisTime = 0;
+int lastTime = 0;
+
+
+
+
+
+
+
 int main(int argc, char* argv[]) {
 
 #if defined(__APPLE__)
 
 	cout << "Running on Apple" << endl;
+	//get the current working directory
+	string s_cwd(getcwd(NULL,0));
 
+		//create a string linking to the mac's image folder
+
+	string s_cwd_images = s_cwd + "/resources/images";
+
+	//test
+	cout << s_cwd_images << endl;
 
 
 #endif
@@ -54,8 +74,8 @@ cout << "Running on Windows"<< endl;
         "An SDL2 window",                  // window title
         SDL_WINDOWPOS_UNDEFINED,           // initial x position
         SDL_WINDOWPOS_UNDEFINED,           // initial y position
-        640,                               // width, in pixels
-        480,                               // height, in pixels
+        1024,                               // width, in pixels
+        768,                               // height, in pixels
         SDL_WINDOW_OPENGL                  // flags - see below
     );
 
@@ -66,8 +86,92 @@ cout << "Running on Windows"<< endl;
         return 1;
     }
 
+    //declare renderer
+    SDL_Renderer *renderer = NULL;
+
+    //create the renderer
+    renderer = SDL_CreateRenderer(window, -1,SDL_RENDERER_ACCELERATED);
+
+    //****** Create Background ******
+    string BKGDpath = s_cwd_images + "/Week 3 thing.png";
 
 
+    //create SDL surface to hold the background image
+    SDL_Surface * surface = IMG_Load(BKGDpath.c_str());
+
+    //create a SDL texture - background 1
+    SDL_Texture *bkgd1;
+
+    //place surface info into the texture bkgd1
+    bkgd1 = SDL_CreateTextureFromSurface(renderer, surface);
+
+    //create a SDL texture - background 2
+      SDL_Texture *bkgd2;
+
+      //place surface info into the texture bkgd1
+         bkgd2 = SDL_CreateTextureFromSurface(renderer, surface);
+
+
+    //free the SDL surface so it can be reused
+    SDL_FreeSurface(surface);
+
+    //create the SDL_Rectangle for the texture's position and size - x,y,w,h
+    SDL_Rect bkgd1Pos;
+
+    //set the X, Y, W, and H for the Rectangle
+    bkgd1Pos.x = 0;
+    bkgd1Pos.y = 0;
+    bkgd1Pos.w = 1024;
+    bkgd1Pos.h = 768;
+
+    //create the SDL_Rectangle for the texture's position and size - x,y,w,h (background 2)
+       SDL_Rect bkgd2Pos;
+
+       //set the X, Y, W, and H for the Rectangle (background2)
+       bkgd2Pos.x = 0;
+       bkgd2Pos.y = -768;
+       bkgd2Pos.w = 1024;
+       bkgd2Pos.h = 768;
+
+
+
+    //set speed for background
+    int bkgdSpeed= 100;
+
+    //set temp variables to hold movement - background 1
+    float BG1pos_X=0, BG1pos_Y=0;
+
+    //set temp variables to hold movement - background 2
+    float BG2pos_X=0, BG2pos_Y= -768;
+
+
+
+
+          //****** Create Cursor ******
+            string CURSORpath = s_cwd_images + "/colinsCursor";
+
+
+            //create SDL surface to hold the background image
+            surface = IMG_Load(CURSORpath.c_str());
+
+            //create a SDL texture - background 1
+            SDL_Texture *cursor;
+
+            //place surface info into the texture bkgd1
+            cursor = SDL_CreateTextureFromSurface(renderer, surface);
+
+            //create SDL_rectangle for texture position and
+            SDL_Rect cursorPos;
+
+            //set the X, Y, W, and H for the Rectangle (cursor)
+                  cursorPos.x = 0;
+                  cursorPos.y = 0;;
+                  cursorPos.w = 59;
+                  cursorPos.h = 62;
+
+
+
+    /*  CREATES BLUE SCREEN
     //The surface contained by the window
     	SDL_Surface* screenSurface = NULL;
 
@@ -79,6 +183,8 @@ cout << "Running on Windows"<< endl;
 
     	//Update the surface
     	SDL_UpdateWindowSurface( window );
+
+    	*/
 
     	//******Set up a game controller variable
     	SDL_GameController*gGameController = NULL;
@@ -126,6 +232,12 @@ cout << "Running on Windows"<< endl;
 
     	while(menu)
     	{
+
+    		//set up frame rate for the section or CASE
+    		thisTime = SDL_GetTicks();
+    		deltaTime = (float)(thisTime - lastTime)/1000;
+    		lastTime = thisTime;
+
 
     		//check for input events
     		if(SDL_PollEvent(&event)){
@@ -190,6 +302,54 @@ cout << "Running on Windows"<< endl;
 
     		}
     	}
+    	//update
+
+    	//update background 1
+    		BG1pos_Y += (bkgdSpeed * 1)* deltaTime;
+
+    	//set new bkgd1 position
+    		bkgd1Pos.y = (int)(BG1pos_Y + 0.5f);
+
+    	//reset when off the bottom of the screen
+    	if(bkgd1Pos.y >= 768){
+
+    		bkgd1Pos.y = -768;
+
+    		BG1pos_Y = bkgd1Pos.y;
+
+    	}
+
+    	//update background 2
+    	    		BG2pos_Y += (bkgdSpeed * 1)* deltaTime;
+
+    	    	//set new bkgd1 position
+    	    		bkgd2Pos.y = (int)(BG2pos_Y + 0.5f);
+
+    	    	//reset when off the bottom of the screen
+    	    	if(bkgd2Pos.y >= 768){
+
+    	    		bkgd2Pos.y = -768;
+
+    	    		BG2pos_Y = bkgd2Pos.y;
+
+    	    	}
+
+    	//Start Drawing
+    	//Clear SDL renderer
+    	SDL_RenderClear(renderer);
+
+    	//Draw the bkgd image
+    	SDL_RenderCopy(renderer, bkgd1, NULL, &bkgd1Pos);
+
+    	//Draw the bkgd image (background 2)
+    	SDL_RenderCopy(renderer, bkgd2, NULL, &bkgd2Pos);
+
+    	//Draw the cursorimage (cursor)
+    	SDL_RenderCopy(renderer, cursor, NULL, &cursorPos);
+
+    	//SDL Renderer present
+    	SDL_RenderPresent(renderer);
+
 
     }
     break; //end menu menu case
